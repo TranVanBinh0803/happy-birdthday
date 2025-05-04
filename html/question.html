@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Happy birdthday</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: #ffffff;
+      }
+
+      canvas#bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+
+      .quiz-container {
+        position: relative;
+        padding: 40px;
+        background-color: rgba(33, 33, 33, 0.9);
+        max-width: 600px;
+        margin: 100px auto;
+        border-radius: 16px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        padding: 12px;
+        margin: 8px 0;
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      li:hover {
+        background-color: #333;
+        color: #fff;
+      }
+
+      .feedback {
+        margin-left: 10px;
+        font-style: italic;
+        color: #ff6b6b;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="bg"></canvas>
+
+    <div class="quiz-container">
+      <h2>Khi nào thì đúng thời điểm?</h2>
+      <ul>
+        <li id="a" onclick="checkAnswer('A')">
+          A. 1 năm trước <span class="feedback" id="fb-a"></span>
+        </li>
+        <li id="b" onclick="checkAnswer('B')">
+          B. Trước Tết <span class="feedback" id="fb-b"></span>
+        </li>
+        <li id="c" onclick="checkAnswer('C')">
+          C. Hiện tại <span class="feedback" id="fb-c"></span>
+        </li>
+        <li id="d" onclick="checkAnswer('D')">
+          D. 3 năm nữa <span class="feedback" id="fb-d"></span>
+        </li>
+        <li id="e" onclick="checkAnswer('E')">
+          E. Forever <span class="feedback" id="fb-e"></span>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      function checkAnswer(option) {
+        const feedbacks = {
+          A: "Thời điểm đó đã qua mất rồi!",
+          B: "Không có cơ hội nói!",
+          D: "Còn quá xa, mình thì đợi được còn bạn thì sao?",
+          E: "Mãi mãi là bao lâu?",
+        };
+
+        ["a", "b", "c", "d", "e"].forEach((id) => {
+          document.getElementById("fb-" + id).textContent = "";
+        });
+
+        if (option === "C") {
+          window.location.href = "heart.html";
+        } else {
+          const feedbackId = "fb-" + option.toLowerCase();
+          document.getElementById(feedbackId).textContent = feedbacks[option];
+        }
+      }
+
+      // Hiệu ứng trái tim di chuyển
+      const canvas = document.getElementById("bg");
+      const ctx = canvas.getContext("2d");
+
+      let width, height;
+      let hearts = [];
+      const colors = ['#ff5e5e', '#ff8a8a', '#ffb6b6', '#ffd1d1', '#ff9e9e', '#ff7979']; // Các màu sắc khác nhau cho trái tim
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener("resize", resize);
+      resize();
+
+      function createHearts(count) {
+        hearts = [];
+        for (let i = 0; i < count; i++) {
+          hearts.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: Math.random() * 15 + 5, // Kích thước ngẫu nhiên từ 5-20
+            dx: (Math.random() - 0.5) * 1,
+            dy: (Math.random() - 0.5) * 1,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * Math.PI * 2, // Góc xoay ngẫu nhiên
+            rotationSpeed: (Math.random() - 0.5) * 0.02 // Tốc độ xoay
+          });
+        }
+      }
+
+      function drawHeart(x, y, size, rotation) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        ctx.scale(size, size);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-2, -2, -2, -1, 0, 1);
+        ctx.bezierCurveTo(2, -1, 2, -2, 0, 0);
+        ctx.fill();
+        
+        ctx.restore();
+      }
+
+      function drawHearts() {
+        ctx.clearRect(0, 0, width, height);
+        
+        hearts.forEach((h) => {
+          ctx.fillStyle = h.color;
+          drawHeart(h.x, h.y, h.size / 10, h.rotation);
+
+          // Cập nhật vị trí
+          h.x += h.dx;
+          h.y += h.dy;
+          h.rotation += h.rotationSpeed;
+
+          // Kiểm tra ranh giới màn hình
+          if (h.x < -h.size || h.x > width + h.size) h.dx *= -1;
+          if (h.y < -h.size || h.y > height + h.size) h.dy *= -1;
+        });
+        
+        requestAnimationFrame(drawHearts);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        resize();
+        createHearts(100); // Số lượng trái tim
+        drawHearts();
+      });
+    </script>
+  </body>
+</html>

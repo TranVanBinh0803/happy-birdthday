@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Happy birdthday</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <button
+      id="toggleMusicButton"
+      style="
+         position: absolute;
+        top: 20px;
+        right: 290px;
+        z-index: 1;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      "
+    >
+      Bật nhạc 🎵
+    </button>
+    <button
+      id="blowButton"
+      style="
+        position: absolute;
+        top: 20px;
+        right: 150px;
+        z-index: 1;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      "
+    >
+      Thổi nến
+    </button>
+    <div
+      id="greeting"
+      style="
+        position: absolute;
+        top: 100px;
+        right: 50px;
+        color: #fff;
+        font-size: 24px;
+        max-width: 300px;
+        display: none;
+        z-index: 5;
+      "
+    >
+      <p>Chúc mừng sinh nhật Mỹ Linh! 🎉</p>
+      <p>
+        Chúc bạn luôn hạnh phúc, thành công trên con đường mình chọn và luôn rực
+        rỡ như ngọn lửa nến lung linh!
+      </p>
+    </div>
+    <audio id="birthdayAudio" loop>
+      <source src="/audio/happy-birthday-to-you.mp3" type="audio/mpeg" />
+    </audio>
+    <button
+      onclick="window.location.href='picture.html'"
+      id="nextButton"
+      style="
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      "
+    >
+      Tiếp tục
+    </button>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/geometries/TextGeometry.js"></script>
+    <script>
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x222222);
+
+      const cakeGroup = new THREE.Group();
+      scene.add(cakeGroup);
+      cakeGroup.position.x = -10;
+
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(-10, 5, 10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(cakeGroup.position.x, 1, cakeGroup.position.z);
+      controls.update();
+
+      const light = new THREE.PointLight(0xffffff, 1.2);
+      light.position.set(5, 10, 5);
+      scene.add(light);
+
+      const ambientLight = new THREE.AmbientLight(0x404040, 1);
+      scene.add(ambientLight);
+
+      const cakeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const sprinkleColors = [0xff0000, 0x00ff00, 0xffff00, 0xff00ff, 0x00ffff];
+
+      const base1 = new THREE.Mesh(
+        new THREE.CylinderGeometry(4, 4, 1, 32),
+        cakeMaterial
+      );
+      base1.position.y = 0.5;
+      cakeGroup.add(base1);
+
+      const base2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.8, 3.8, 0.4, 32),
+        cakeMaterial
+      );
+      base2.position.y = 1.2;
+      cakeGroup.add(base2);
+
+      const flames = [];
+
+      function createCandle(x, z, color) {
+        const candleHeight = 0.6;
+        const candleGeometry = new THREE.CylinderGeometry(
+          0.1,
+          0.1,
+          candleHeight,
+          16
+        );
+        const candleMaterial = new THREE.MeshStandardMaterial({ color });
+        const candle = new THREE.Mesh(candleGeometry, candleMaterial);
+        candle.position.set(x, 1.4 + candleHeight / 2, z);
+        cakeGroup.add(candle);
+
+        const flameTexture = new THREE.TextureLoader().load(
+          "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/spark1.png"
+        );
+
+        const flameMaterial = new THREE.SpriteMaterial({
+          map: flameTexture,
+          color: 0xffaa00,
+          blending: THREE.AdditiveBlending,
+          transparent: true,
+          depthWrite: false,
+        });
+
+        const flame = new THREE.Sprite(flameMaterial);
+        flame.scale.set(0.3, 0.4, 1);
+        flame.position.set(x, 1.4 + candleHeight + 0.15, z);
+        cakeGroup.add(flame);
+
+        const flameLight = new THREE.PointLight(0xffaa00, 0.8, 1.5);
+        flameLight.position.copy(flame.position);
+        cakeGroup.add(flameLight);
+
+        flames.push({ mesh: flame, baseY: flame.position.y, flameLight });
+      }
+
+      const candleColors = [0xff69b4, 0xffff00, 0x00bfff, 0x00ff00, 0xff4500];
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const radius = 3.5;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const color = candleColors[i % candleColors.length];
+        createCandle(x, z, color);
+      }
+
+      for (let i = 0; i < 100; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 3;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const sprinkle = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 6, 6),
+          new THREE.MeshStandardMaterial({
+            color:
+              sprinkleColors[Math.floor(Math.random() * sprinkleColors.length)],
+          })
+        );
+        sprinkle.position.set(x, 1.42, z);
+        cakeGroup.add(sprinkle);
+      }
+
+      const loader = new THREE.FontLoader();
+      loader.load(
+        "https://cdn.jsdelivr.net/npm/three@0.140.0/examples/fonts/optimer_bold.typeface.json",
+        function (font) {
+          const material = new THREE.MeshStandardMaterial({
+            color: 0xff66cc,
+            metalness: 0.4,
+            roughness: 0.3,
+          });
+
+          const textGeo1 = new THREE.TextGeometry("My Linh", {
+            font: font,
+            size: 0.5,
+            height: 0.1,
+            bevelEnabled: true,
+            bevelThickness: 0.01,
+            bevelSize: 0.008,
+            bevelSegments: 5,
+          });
+          textGeo1.center();
+          const text1 = new THREE.Mesh(textGeo1, material);
+          text1.rotation.x = -Math.PI / 2;
+          text1.position.set(0, 1.43, 0.7);
+          cakeGroup.add(text1);
+
+          const textGeo2 = new THREE.TextGeometry("Happy Birthday", {
+            font: font,
+            size: 0.5,
+            height: 0.1,
+            bevelEnabled: true,
+            bevelThickness: 0.01,
+            bevelSize: 0.008,
+            bevelSegments: 5,
+          });
+          textGeo2.center();
+          const text2 = new THREE.Mesh(textGeo2, material);
+          text2.rotation.x = -Math.PI / 2;
+          text2.position.set(0, 1.43, -0.3);
+          cakeGroup.add(text2);
+        }
+      );
+
+      // Wind particles
+      let windParticles = [];
+      function createWindEffect() {
+        const particles = [];
+        for (let i = 0; i < 200; i++) {
+          const sprite = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+              color: 0xffffff,
+              transparent: true,
+              opacity: 0.9,
+            })
+          );
+          sprite.scale.set(0.15, 0.15, 1);
+          sprite.position.set(
+            -15,
+            1.5 + Math.random() * 1.5,
+            Math.random() * 4 - 2
+          );
+          scene.add(sprite);
+          particles.push(sprite);
+        }
+        return particles;
+      }
+
+      let blowing = false;
+      let blowStartTime = 0;
+      let windDuration = 500;
+
+      function blowCandles() {
+        blowing = true;
+        blowStartTime = performance.now();
+        windParticles = createWindEffect();
+        document.getElementById("blowButton").disabled = true;
+      }
+
+      document
+        .getElementById("blowButton")
+        .addEventListener("click", blowCandles);
+
+      function animate(time) {
+        requestAnimationFrame(animate);
+
+        if (blowing) {
+          const elapsed = time - blowStartTime;
+
+          for (let i = windParticles.length - 1; i >= 0; i--) {
+            const p = windParticles[i];
+            p.position.x += 0.25 + Math.random() * 0.05;
+            p.position.y += (Math.random() - 0.5) * 0.1;
+            p.material.opacity -= 0.01;
+
+            if (p.material.opacity <= 0) {
+              scene.remove(p);
+              windParticles.splice(i, 1);
+            }
+          }
+
+          if (
+            elapsed > windDuration &&
+            flames.length > 0 &&
+            windParticles.length === 0
+          ) {
+            flames.forEach((f) => {
+              if (f.mesh.parent) {
+                f.mesh.parent.remove(f.mesh);
+              }
+              if (f.flameLight && f.flameLight.parent) {
+                f.flameLight.parent.remove(f.flameLight);
+              }
+            });
+            flames.length = 0;
+            blowing = false;
+            document.getElementById("greeting").style.display = "block";
+          }
+        }
+
+        flames.forEach((f, i) => {
+          const scale = 0.25 + Math.sin(time * 0.005 + i) * 0.05;
+          f.mesh.scale.set(scale * 1.5, scale * 2, 1);
+          f.mesh.position.y = f.baseY + Math.sin(time * 0.005 + i * 3) * 0.02;
+          if (f.flameLight) {
+            f.flameLight.position.y = f.mesh.position.y;
+            f.flameLight.intensity = 0.6 + Math.random() * 0.4;
+          }
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+    <script>
+      const audio = document.getElementById("birthdayAudio");
+      const toggleBtn = document.getElementById("toggleMusicButton");
+      let isPlaying = false;
+    
+      toggleBtn.addEventListener("click", function () {
+        if (!isPlaying) {
+          audio.play().then(() => {
+            toggleBtn.textContent = "Tắt nhạc 🔇";
+            isPlaying = true;
+          }).catch((err) => {
+            console.error("Không thể phát nhạc:", err);
+          });
+        } else {
+          audio.pause();
+          audio.currentTime = 0; // Reset về đầu
+          toggleBtn.textContent = "Bật nhạc 🎵";
+          isPlaying = false;
+        }
+      });
+    </script>
+  </body>
+</html>

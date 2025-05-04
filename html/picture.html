@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy birdthday</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+      body,
+      html {
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      h1 {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <h1 style="position: absolute; top: 20px; right: 200px; color: #fff">
+      Ảnh xinh của bạn nè!
+    </h1>
+    <button
+      onclick="window.location.href='question.html'"
+      id="nextButton"
+      style="
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      "
+    >
+      Tiếp tục
+    </button>
+
+    <script>
+      const canvas = document.getElementById("scene");
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 7;
+
+      scene.background = new THREE.Color(0x222222);
+
+      // Load textures
+      const loader = new THREE.TextureLoader();
+      const textures1 = [
+        loader.load("/images/image1.jpg"),
+        loader.load("/images/image5.jpg"),
+        loader.load("/images/image3.jpg"),
+        loader.load("/images/image4.jpg"),
+        loader.load("/images/image2.jpg"),
+        loader.load("/images/image6.jpg"),
+      ];
+      
+      // Thêm bộ textures thứ hai
+      const textures2 = [
+      loader.load("/images/image7.jpg"),
+        loader.load("/images/image11.jpg"),
+        loader.load("/images/image9.jpg"),
+        loader.load("/images/image10.jpg"),
+        loader.load("/images/image8.jpg"),
+        loader.load("/images/image12.jpg"),
+      ];
+
+      // Tạo hàm để tạo khối lập phương nhỏ
+      function createSmallCube(textures, position) {
+        const smallGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+        const smallMaterials = textures.map(
+          (tex) =>
+            new THREE.MeshBasicMaterial({
+              map: tex,
+              transparent: true,
+              opacity: 1,
+            })
+        );
+        const smallCube = new THREE.Mesh(smallGeometry, smallMaterials);
+        smallCube.position.set(...position);
+        scene.add(smallCube);
+        return smallCube;
+      }
+
+      // Tạo hai khối lập phương nhỏ
+      const smallCube1 = createSmallCube(textures1, [-2, 0, 0]);
+      const smallCube2 = createSmallCube(textures2, [2, 0, 0]);
+
+      // Định nghĩa hàm tạo mặt phẳng cho khối lớn
+      const createOffsetPlane = (w, h, tex, pos, rot) => {
+        const mat = new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 0,
+          side: THREE.BackSide,
+        });
+        const geo = new THREE.PlaneGeometry(w, h);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(...pos);
+        mesh.rotation.set(...rot);
+        return { mesh, mat };
+      };
+
+      const gap = 0.05;
+      const faceSize = 3;
+
+      // Tạo hàm để tạo các mặt của khối lớn
+      function createBigCubeFaces(textures, position) {
+        const faces = [
+          createOffsetPlane(
+            faceSize,
+            faceSize,
+            textures[0],
+            [0, 0, -faceSize / 2 - gap],
+            [0, 0, 0]
+          ), // back
+          createOffsetPlane(
+            faceSize,
+            faceSize,
+            textures[1],
+            [0, 0, faceSize / 2 + gap],
+            [0, Math.PI, 0]
+          ), // front
+          createOffsetPlane(
+            faceSize,
+            faceSize,
+            textures[2],
+            [-faceSize / 2 - gap, 0, 0],
+            [0, Math.PI / 2, 0]
+          ), // left
+          createOffsetPlane(
+            faceSize,
+            faceSize,
+            textures[3],
+            [faceSize / 2 + gap, 0, 0],
+            [0, -Math.PI / 2, 0]
+          ), // right
+          // createOffsetPlane(
+          //   faceSize,
+          //   faceSize,
+          //   textures[4],
+          //   [0, faceSize / 2 + gap, 0],
+          //   [Math.PI / 2, 0, 0]
+          // ), 
+          // createOffsetPlane(
+          //   faceSize,
+          //   faceSize,
+          //   textures[5],
+          //   [0, -faceSize / 2 - gap, 0],
+          //   [-Math.PI / 2, 0, 0]
+          // ), 
+        ];
+        
+        return faces;
+      }
+
+      // Tạo các mặt cho hai khối lớn
+      const bigCubeFaces1 = createBigCubeFaces(textures1, [-2, 0, 0]);
+      const bigCubeFaces2 = createBigCubeFaces(textures2, [2, 0, 0]);
+
+      // Tạo hai group cho khối lớn và đặt vị trí cố định
+      const bigCubeGroup1 = new THREE.Group();
+      bigCubeFaces1.forEach(({ mesh }) => bigCubeGroup1.add(mesh));
+      bigCubeGroup1.position.set(-2, 0, 0); // Đặt vị trí cố định
+      bigCubeGroup1.scale.set(0, 0, 0);
+      scene.add(bigCubeGroup1);
+
+      const bigCubeGroup2 = new THREE.Group();
+      bigCubeFaces2.forEach(({ mesh }) => bigCubeGroup2.add(mesh));
+      bigCubeGroup2.position.set(2, 0, 0); // Đặt vị trí cố định
+      bigCubeGroup2.scale.set(0, 0, 0);
+      scene.add(bigCubeGroup2);
+
+      // Raycaster for hover detection
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      let isHovering1 = false;
+      let isHovering2 = false;
+
+      // Biến để lưu góc xoay
+      let rotationAngle = 0;
+      
+      // Animate
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // Cập nhật góc xoay
+        rotationAngle += 0.01;
+        
+        // Xoay các khối nhỏ
+        smallCube1.rotation.y = rotationAngle;
+        smallCube2.rotation.y = rotationAngle;
+        
+        // Xoay các khối lớn - luôn xoay tại chỗ
+        bigCubeGroup1.rotation.y = rotationAngle;
+        bigCubeGroup2.rotation.y = rotationAngle;
+
+        // Hiệu ứng cho khối thứ nhất
+        const targetScale1 = isHovering1 ? 1 : 0;
+        const speed = 0.05;
+        const newScale1 = THREE.MathUtils.lerp(
+          bigCubeGroup1.scale.x,
+          targetScale1,
+          speed
+        );
+        bigCubeGroup1.scale.set(newScale1, newScale1, newScale1);
+
+        // Hiệu ứng cho khối thứ hai
+        const targetScale2 = isHovering2 ? 1 : 0;
+        const newScale2 = THREE.MathUtils.lerp(
+          bigCubeGroup2.scale.x,
+          targetScale2,
+          speed
+        );
+        bigCubeGroup2.scale.set(newScale2, newScale2, newScale2);
+
+        // Opacity transition cho khối thứ nhất
+        const targetBigOpacity1 = isHovering1 ? 1 : 0;
+        const targetSmallOpacity1 = isHovering1 ? 0.2 : 1;
+        smallCube1.material.forEach((mat) => {
+          mat.opacity = THREE.MathUtils.lerp(
+            mat.opacity,
+            targetSmallOpacity1,
+            speed
+          );
+        });
+        bigCubeFaces1.forEach(({ mat }) => {
+          mat.opacity = THREE.MathUtils.lerp(
+            mat.opacity,
+            targetBigOpacity1,
+            speed
+          );
+        });
+
+        // Opacity transition cho khối thứ hai
+        const targetBigOpacity2 = isHovering2 ? 1 : 0;
+        const targetSmallOpacity2 = isHovering2 ? 0.2 : 1;
+        smallCube2.material.forEach((mat) => {
+          mat.opacity = THREE.MathUtils.lerp(
+            mat.opacity,
+            targetSmallOpacity2,
+            speed
+          );
+        });
+        bigCubeFaces2.forEach(({ mat }) => {
+          mat.opacity = THREE.MathUtils.lerp(
+            mat.opacity,
+            targetBigOpacity2,
+            speed
+          );
+        });
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      canvas.addEventListener("mousemove", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        
+        // Kiểm tra hover cho từng khối
+        const intersects1 = raycaster.intersectObject(smallCube1);
+        isHovering1 = intersects1.length > 0;
+        
+        const intersects2 = raycaster.intersectObject(smallCube2);
+        isHovering2 = intersects2.length > 0;
+      });
+    </script>
+  </body>
+</html>
